@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>大地图幸存者 · 移动版</title>
+  <title>大地图幸存者 · 双端操控</title>
   <style>
     * {
       margin: 0;
@@ -40,7 +40,6 @@
       touch-action: none;
     }
 
-    /* 顶部 HUD */
     .hud {
       position: absolute;
       top: 8px;
@@ -69,17 +68,19 @@
       backdrop-filter: blur(6px);
     }
 
-    /* 虚拟摇杆 */
+    /* 虚拟摇杆通用 */
     .joystick-zone {
       position: absolute;
-      left: 0;
       bottom: 0;
       width: 45%;
-      height: 45%;
+      height: 50%;
       z-index: 40;
       pointer-events: auto;
       touch-action: none;
     }
+    .joystick-zone.left { left: 0; }
+    .joystick-zone.right { right: 0; }
+
     .joystick-base {
       position: absolute;
       width: 130px;
@@ -93,8 +94,10 @@
       transition: opacity 0.2s ease;
       pointer-events: none;
     }
-    .joystick-base.active {
-      opacity: 0.9;
+    .joystick-base.active { opacity: 0.9; }
+    .joystick-base.fire {
+      border-color: rgba(255, 150, 80, 0.5);
+      box-shadow: 0 0 24px rgba(255, 120, 0, 0.25), inset 0 0 20px rgba(255, 120, 0, 0.1);
     }
     .joystick-thumb {
       position: absolute;
@@ -107,20 +110,13 @@
       transform: translate(-50%, -50%);
       pointer-events: none;
     }
-
-    /* 射击按钮（可选，用于点按射击） */
-    .shoot-btn-zone {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 45%;
-      height: 45%;
-      z-index: 40;
-      pointer-events: auto;
-      touch-action: none;
+    .joystick-thumb.fire {
+      background: radial-gradient(circle, rgba(255, 200, 120, 0.9), rgba(255, 140, 58, 0.7));
+      border-color: rgba(255, 210, 150, 0.9);
+      box-shadow: 0 0 20px rgba(255, 150, 50, 0.7);
     }
 
-    /* 通用面板 */
+    /* 面板 */
     .panel {
       position: absolute;
       top: 0;
@@ -147,7 +143,6 @@
       z-index: -1;
     }
 
-    /* 主菜单 */
     .mainmenu-title {
       font-size: clamp(2rem, 8vw, 4rem);
       font-weight: 800;
@@ -210,7 +205,6 @@
       font-family: inherit;
     }
 
-    /* 加载指示器 */
     .loading-indicator {
       position: absolute;
       bottom: 20%;
@@ -233,7 +227,6 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .loading-progress { color: #4a9aff; font-weight: bold; min-width: 40px; text-align: right; }
 
-    /* 武器选择 */
     .weapon-select-title {
       font-size: clamp(1.4rem, 5vw, 2.2rem);
       font-weight: 700;
@@ -274,17 +267,13 @@
       box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05);
       touch-action: manipulation;
     }
-    .weapon-card:active {
-      border-color: #7ab8ff;
-      filter: brightness(1.2);
-    }
+    .weapon-card:active { border-color: #7ab8ff; filter: brightness(1.2); }
     .weapon-card-icon { font-size: 2.2rem; display: block; margin-bottom: 8px; line-height: 1; }
     .weapon-card-name { font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 6px; letter-spacing: 2px; }
     .weapon-card-desc { font-size: 0.7rem; color: #9bb8da; line-height: 1.4; min-height: 40px; margin-bottom: 8px; }
     .weapon-card-stats { font-size: 0.65rem; color: #6a9ac0; line-height: 1.6; background: rgba(10, 20, 36, 0.8); border-radius: 8px; padding: 6px 8px; border: 1px solid rgba(30, 58, 90, 0.6); }
     .weapon-card-stats span { color: #aad8ff; font-weight: 600; }
 
-    /* 升级面板 */
     .levelup-header {
       display: flex;
       align-items: center;
@@ -370,7 +359,6 @@
     .skill-level { font-size: 0.65rem; color: #7ab8e0; margin-top: 8px; background: rgba(30, 50, 80, 0.6); display: inline-block; padding: 3px 12px; border-radius: 10px; border: 1px solid rgba(80, 150, 255, 0.25); }
     .levelup-hint { color: #5a7a9a; margin-top: 16px; font-size: 0.75rem; letter-spacing: 2px; text-align: center; }
 
-    /* 游戏结束 */
     .gameover-title {
       font-size: clamp(1.6rem, 7vw, 3.2rem);
       font-weight: 700;
@@ -424,7 +412,6 @@
     .restart-btn:active { transform: scale(0.97); }
     .restart-hint { color: #5a7a9a; font-size: 0.7rem; margin-top: 12px; letter-spacing: 2px; }
 
-    /* 音频提示 */
     .audio-hint {
       position: absolute;
       bottom: 4px;
@@ -443,17 +430,14 @@
 
     /* 桌面端隐藏虚拟摇杆 */
     @media (hover: hover) and (pointer: fine) {
-      .joystick-zone, .shoot-btn-zone { display: none; }
+      .joystick-zone { display: none; }
       canvas { cursor: none; }
     }
-
-    /* 移动端样式 */
     @media (hover: none) and (pointer: coarse) {
       canvas { cursor: default; }
       .audio-hint { display: block; }
     }
 
-    /* 横屏提示 */
     .rotate-hint {
       position: fixed;
       top: 0; left: 0;
@@ -493,7 +477,6 @@
 <div id="gameContainer">
   <canvas id="gameCanvas"></canvas>
 
-  <!-- HUD -->
   <div class="hud">
     <div class="hud-item">💀 <span id="killDisplay">0</span></div>
     <div class="hud-item">⚡ <span id="timeDisplay">0</span>s</div>
@@ -501,16 +484,18 @@
     <div class="hud-item">🔫 <span id="weaponDisplay">步枪</span></div>
   </div>
 
-  <!-- 虚拟摇杆 -->
-  <div class="joystick-zone" id="joystickZone">
-    <div class="joystick-base" id="joystickBase"></div>
-    <div class="joystick-thumb" id="joystickThumb"></div>
+  <!-- 左侧移动摇杆 -->
+  <div class="joystick-zone left" id="moveZone">
+    <div class="joystick-base" id="moveBase"></div>
+    <div class="joystick-thumb" id="moveThumb"></div>
   </div>
 
-  <!-- 射击区域（触摸右侧或点击射击） -->
-  <div class="shoot-btn-zone" id="shootZone"></div>
+  <!-- 右侧射击摇杆 -->
+  <div class="joystick-zone right" id="aimZone">
+    <div class="joystick-base fire" id="aimBase"></div>
+    <div class="joystick-thumb fire" id="aimThumb"></div>
+  </div>
 
-  <!-- 升级面板 -->
   <div class="panel levelup-panel" id="levelupPanel">
     <div class="levelup-header">
       <div class="levelup-title">⚡ 等级提升</div>
@@ -520,32 +505,18 @@
     <div class="levelup-hint">点击卡片选择一项强化</div>
   </div>
 
-  <!-- 游戏结束 -->
   <div class="panel gameover-panel" id="gameoverPanel">
     <div class="gameover-title">💀 你已阵亡 💀</div>
     <div class="gameover-stats">
-      <div class="gameover-stat">
-        <div class="gameover-stat-label">击杀</div>
-        <div class="gameover-stat-value" id="finalKills">0</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-label">时间</div>
-        <div class="gameover-stat-value" id="finalTime">0s</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-label">等级</div>
-        <div class="gameover-stat-value" id="finalLevel">1</div>
-      </div>
-      <div class="gameover-stat">
-        <div class="gameover-stat-label">武器</div>
-        <div class="gameover-stat-value" id="finalWeapon">步枪</div>
-      </div>
+      <div class="gameover-stat"><div class="gameover-stat-label">击杀</div><div class="gameover-stat-value" id="finalKills">0</div></div>
+      <div class="gameover-stat"><div class="gameover-stat-label">时间</div><div class="gameover-stat-value" id="finalTime">0s</div></div>
+      <div class="gameover-stat"><div class="gameover-stat-label">等级</div><div class="gameover-stat-value" id="finalLevel">1</div></div>
+      <div class="gameover-stat"><div class="gameover-stat-label">武器</div><div class="gameover-stat-value" id="finalWeapon">步枪</div></div>
     </div>
     <button class="restart-btn" id="restartBtn">重新开始</button>
     <div class="restart-hint">点击按钮重新开始</div>
   </div>
 
-  <!-- 主菜单 -->
   <div class="panel mainmenu-panel active" id="mainmenuPanel">
     <div class="mainmenu-title">幸存者</div>
     <div class="mainmenu-subtitle">SURVIVOR</div>
@@ -555,14 +526,9 @@
       <span>加载</span>
       <span class="loading-progress" id="loadingProgress">0%</span>
     </div>
-    <div class="mainmenu-info">
-      🕹️ 左侧虚拟摇杆移动<br>
-      🔫 自动射击最近敌人<br>
-      击杀敌人获取经验，升级时选择技能强化
-    </div>
+    <div class="mainmenu-info" id="controlInfo"></div>
   </div>
 
-  <!-- 武器选择 -->
   <div class="panel weapon-select-panel" id="weaponSelectPanel">
     <div class="weapon-select-title">⚔️ 选择武器</div>
     <div class="weapon-select-subtitle">每把武器都有独特的战斗风格</div>
@@ -595,40 +561,37 @@
     const weaponCards = document.getElementById('weaponCards');
     const loadingIndicator = document.getElementById('loadingIndicator');
     const loadingProgress = document.getElementById('loadingProgress');
-    const joystickZone = document.getElementById('joystickZone');
-    const joystickBase = document.getElementById('joystickBase');
-    const joystickThumb = document.getElementById('joystickThumb');
-    const shootZone = document.getElementById('shootZone');
+    const moveZone = document.getElementById('moveZone');
+    const moveBase = document.getElementById('moveBase');
+    const moveThumb = document.getElementById('moveThumb');
+    const aimZone = document.getElementById('aimZone');
+    const aimBase = document.getElementById('aimBase');
+    const aimThumb = document.getElementById('aimThumb');
+    const controlInfo = document.getElementById('controlInfo');
 
-    // ---------- 设备检测 ----------
-    const isMobile = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
-    const isTouchDevice = isMobile;
+    const isTouchDevice = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
-    // ---------- 响应式 Canvas ----------
+    // 控制提示
+    if (isTouchDevice) {
+      controlInfo.innerHTML = '🕹️ 左侧摇杆移动 &nbsp;·&nbsp; 🎯 右侧摇杆瞄准并自动射击<br>击杀敌人获取经验，升级时选择技能强化';
+    } else {
+      controlInfo.innerHTML = '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> 移动 &nbsp;·&nbsp; 鼠标瞄准 &nbsp;·&nbsp; <kbd>按住左键</kbd> 射击<br>击杀敌人获取经验，升级时选择技能强化';
+    }
+
+    // ---------- Canvas 响应式 ----------
     function resizeCanvas() {
       const container = document.getElementById('gameContainer');
-      const containerW = container.clientWidth;
-      const containerH = container.clientHeight;
-
-      // 保持 16:10 比例
-      const targetRatio = 960 / 640;
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const ratio = 960 / 640;
       let w, h;
-      if (containerW / containerH > targetRatio) {
-        h = containerH;
-        w = h * targetRatio;
-      } else {
-        w = containerW;
-        h = w / targetRatio;
-      }
-
-      // 设置 canvas 显示尺寸
+      if (cw / ch > ratio) { h = ch; w = h * ratio; }
+      else { w = cw; h = w / ratio; }
       canvas.style.width = w + 'px';
       canvas.style.height = h + 'px';
-
-      // 设置 canvas 内部渲染分辨率（保证清晰度，但限制最大分辨率防止性能问题）
       const maxRes = 1920;
       let renderW = Math.min(w * window.devicePixelRatio, maxRes);
-      let renderH = renderW / targetRatio;
+      let renderH = renderW / ratio;
       canvas.width = Math.round(renderW);
       canvas.height = Math.round(renderH);
     }
@@ -636,90 +599,45 @@
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
 
-    // 让 canvas 内部分辨率作为绘制基准，逻辑尺寸用 canvas.width/height
     function getViewWidth() { return canvas.width; }
     function getViewHeight() { return canvas.height; }
 
-    // ---------- 音频系统 ----------
+    // ---------- 音频 ----------
     const audio = {
       bgm: null, shoot: null, explosion: null,
-      initialized: false,
-      loadedCount: 0,
-      totalCount: 3,
-      allLoaded: false,
-      bgmStarted: false,
+      initialized: false, loadedCount: 0, totalCount: 3, allLoaded: false, bgmStarted: false,
     };
 
     function loadAudio() {
-      const bgm = new Audio();
-      bgm.src = 'loonboon.mp3';
-      bgm.loop = true;
-      bgm.volume = 0.25;
-      bgm.preload = 'auto';
-
-      const shoot = new Audio();
-      shoot.src = 'shoot.wav';
-      shoot.volume = 0.35;
-      shoot.preload = 'auto';
-
-      const explosion = new Audio();
-      explosion.src = 'explosion.wav';
-      explosion.volume = 0.45;
-      explosion.preload = 'auto';
-
-      audio.bgm = bgm;
-      audio.shoot = shoot;
-      audio.explosion = explosion;
+      const bgm = new Audio(); bgm.src = 'loonboon.mp3'; bgm.loop = true; bgm.volume = 0.25; bgm.preload = 'auto';
+      const shoot = new Audio(); shoot.src = 'shoot.wav'; shoot.volume = 0.35; shoot.preload = 'auto';
+      const explosion = new Audio(); explosion.src = 'explosion.wav'; explosion.volume = 0.45; explosion.preload = 'auto';
+      audio.bgm = bgm; audio.shoot = shoot; audio.explosion = explosion;
 
       function onLoaded() {
         audio.loadedCount++;
-        const percent = Math.floor((audio.loadedCount / audio.totalCount) * 100);
-        loadingProgress.textContent = percent + '%';
+        loadingProgress.textContent = Math.floor((audio.loadedCount / audio.totalCount) * 100) + '%';
         if (audio.loadedCount >= audio.totalCount) {
-          audio.allLoaded = true;
-          audio.initialized = true;
-          startBtn.disabled = false;
-          startBtn.textContent = '开始游戏';
+          audio.allLoaded = true; audio.initialized = true;
+          startBtn.disabled = false; startBtn.textContent = '开始游戏';
           loadingIndicator.classList.add('hidden');
         }
       }
-
       bgm.addEventListener('canplaythrough', onLoaded, { once: true });
       shoot.addEventListener('canplaythrough', onLoaded, { once: true });
       explosion.addEventListener('canplaythrough', onLoaded, { once: true });
-
       setTimeout(() => {
         if (!audio.allLoaded) {
-          audio.allLoaded = true;
-          audio.initialized = true;
-          startBtn.disabled = false;
-          startBtn.textContent = '开始游戏';
+          audio.allLoaded = true; audio.initialized = true;
+          startBtn.disabled = false; startBtn.textContent = '开始游戏';
           loadingIndicator.classList.add('hidden');
           loadingProgress.textContent = '100%';
         }
       }, 5000);
     }
-
-    function playBGM() {
-      if (!audio.bgm || audio.bgmStarted) return;
-      audio.bgmStarted = true;
-      audio.bgm.play().catch(() => {});
-    }
-
-    function playShootSound() {
-      if (!audio.shoot) return;
-      const s = audio.shoot.cloneNode();
-      s.volume = 0.35;
-      s.play().catch(() => {});
-    }
-
-    function playExplosionSound() {
-      if (!audio.explosion) return;
-      const s = audio.explosion.cloneNode();
-      s.volume = 0.45;
-      s.play().catch(() => {});
-    }
-
+    function playBGM() { if (audio.bgm && !audio.bgmStarted) { audio.bgmStarted = true; audio.bgm.play().catch(() => {}); } }
+    function playShootSound() { if (audio.shoot) { const s = audio.shoot.cloneNode(); s.volume = 0.35; s.play().catch(() => {}); } }
+    function playExplosionSound() { if (audio.explosion) { const s = audio.explosion.cloneNode(); s.volume = 0.45; s.play().catch(() => {}); } }
     loadAudio();
 
     // ---------- 品质 ----------
@@ -730,28 +648,23 @@
       legendary: { name: '传说', color: '#ffcc44', baseWeight: 2.5, class: 'quality-legendary' },
       mythic:    { name: '神话', color: '#ff6080', baseWeight: 0.5, class: 'quality-mythic' },
     };
-
     function getQualityWeights() {
       const lv = player.level;
       const luckBonus = Math.min(lv * 0.15, 6);
       const highTierBonus = Math.min(lv * 0.08, 3);
       return {
-        common:    Math.max(30, QUALITIES.common.baseWeight - luckBonus * 2),
-        rare:      QUALITIES.rare.baseWeight + luckBonus,
-        epic:      QUALITIES.epic.baseWeight + luckBonus * 0.6 + highTierBonus * 0.4,
+        common: Math.max(30, QUALITIES.common.baseWeight - luckBonus * 2),
+        rare: QUALITIES.rare.baseWeight + luckBonus,
+        epic: QUALITIES.epic.baseWeight + luckBonus * 0.6 + highTierBonus * 0.4,
         legendary: QUALITIES.legendary.baseWeight + luckBonus * 0.3 + highTierBonus * 0.3,
-        mythic:    QUALITIES.mythic.baseWeight + luckBonus * 0.1 + highTierBonus * 0.2,
+        mythic: QUALITIES.mythic.baseWeight + luckBonus * 0.1 + highTierBonus * 0.2,
       };
     }
-
     function rollQuality() {
       const w = getQualityWeights();
       const total = Object.values(w).reduce((s, v) => s + v, 0);
       let rand = Math.random() * total;
-      for (const key in w) {
-        if (rand < w[key]) return key;
-        rand -= w[key];
-      }
+      for (const key in w) { if (rand < w[key]) return key; rand -= w[key]; }
       return 'common';
     }
 
@@ -795,13 +708,7 @@
           for (let i = 0; i < 2; i++) {
             const angle = Math.random() * Math.PI * 2;
             const offset = 30;
-            enemies.push({
-              x: e.x + Math.cos(angle) * offset, y: e.y + Math.sin(angle) * offset,
-              radius: 12, speed: 1.6, hp: 1, maxHp: 1,
-              color: '#c04020', color2: '#6a1a08', glowColor: '#ff6040',
-              exp: 1, damage: 8, typeKey: 'splitter_mini',
-              hitFlash: 0, spawnGlow: 20, trail: [], isBoss: false,
-            });
+            enemies.push({ x: e.x + Math.cos(angle) * offset, y: e.y + Math.sin(angle) * offset, radius: 12, speed: 1.6, hp: 1, maxHp: 1, color: '#c04020', color2: '#6a1a08', glowColor: '#ff6040', exp: 1, damage: 8, typeKey: 'splitter_mini', hitFlash: 0, spawnGlow: 20, trail: [], isBoss: false });
           }
         },
       },
@@ -809,7 +716,6 @@
       ghost: { name: '幽灵', radius: 14, speed: 2.2, hp: 2, maxHp: 2, color: '#4a2a6a', color2: '#2a1040', glowColor: '#c080ff', exp: 3, damage: 15, weight: 8 },
       boss: { name: 'BOSS', radius: 44, speed: 1.0, hp: 60, maxHp: 60, color: '#8a0e3a', color2: '#4a0018', glowColor: '#ff0060', exp: 40, damage: 35, weight: 0, isBoss: true },
     };
-
     function getEnemyWeight(type, time) {
       const base = type.weight || 0;
       if (type.name === '精英') return time > 30 ? base : 0;
@@ -819,7 +725,6 @@
       if (type.name === '幽灵') return time > 40 ? base : 0;
       return base;
     }
-
     function pickEnemyType() {
       const time = gameTime;
       let totalWeight = 0;
@@ -832,10 +737,7 @@
         totalWeight += w;
       }
       let rand = Math.random() * totalWeight;
-      for (const key in weights) {
-        if (rand < weights[key]) return key;
-        rand -= weights[key];
-      }
+      for (const key in weights) { if (rand < weights[key]) return key; rand -= weights[key]; }
       return 'grunt';
     }
 
@@ -870,14 +772,9 @@
     let bossCount = 0;
     const keys = { w: false, a: false, s: false, d: false };
 
-    // ---------- 虚拟摇杆状态 ----------
-    let joystick = {
-      active: false,
-      touchId: null,
-      baseX: 0, baseY: 0,
-      dx: 0, dy: 0,
-      maxDist: 60,
-    };
+    // ---------- 摇杆状态 ----------
+    let moveJoystick = { active: false, touchId: null, baseX: 0, baseY: 0, dx: 0, dy: 0, maxDist: 60 };
+    let aimJoystick = { active: false, touchId: null, baseX: 0, baseY: 0, dx: 0, dy: 0, maxDist: 60, hasDirection: false };
 
     // ---------- 技能池 ----------
     const skillPool = [
@@ -900,12 +797,11 @@
       { id: 'timeWarp', name: '时间扭曲', icon: '⏳', desc: '所有敌人移动速度降低 15%', maxLevel: 3, quality: 'mythic', apply: () => { player.enemySlow = (player.enemySlow || 0) + 0.15; } },
       { id: 'godMode', name: '弑神之力', icon: '👑', desc: '伤害 +3，暴击率 +10%，射速 +15%', maxLevel: 2, quality: 'mythic', apply: () => { player.damage += 3; player.critChance = Math.min(0.85, player.critChance + 0.10); player.fireRate *= 1.15; } },
     ];
-
     let skillLevels = {};
     skillPool.forEach(s => skillLevels[s.id] = 0);
     player.pierce = 0;
 
-    // ---------- 辅助函数 ----------
+    // ---------- 辅助 ----------
     function clamp(v, min, max) { return Math.min(max, Math.max(min, v)); }
     function distSq(x1, y1, x2, y2) { const dx = x1 - x2; const dy = y1 - y2; return dx * dx + dy * dy; }
 
@@ -916,7 +812,6 @@
         particles.push({ x, y, vx: Math.cos(angle) * spd, vy: Math.sin(angle) * spd, life: life + Math.random() * 15, maxLife: life + Math.random() * 15, size: size + Math.random() * 2, color });
       }
     }
-
     function shakeScreen(i) { screenShake.intensity = Math.max(screenShake.intensity, i); }
 
     function spawnEnemy() {
@@ -935,33 +830,16 @@
       } while (attempts < 20 && distSq(spawnX, spawnY, player.x, player.y) < minDistFromPlayer * minDistFromPlayer);
       const timeBonus = Math.floor(gameTime / 25);
       const expValue = type.exp + timeBonus;
-      enemies.push({
-        x: spawnX, y: spawnY, radius: type.radius, speed: type.speed,
-        hp: type.hp, maxHp: type.maxHp,
-        color: type.color, color2: type.color2, glowColor: type.glowColor,
-        exp: expValue, damage: type.damage, typeKey,
-        hitFlash: 0, spawnGlow: 30, trail: [], isBoss: false,
-      });
+      enemies.push({ x: spawnX, y: spawnY, radius: type.radius, speed: type.speed, hp: type.hp, maxHp: type.maxHp, color: type.color, color2: type.color2, glowColor: type.glowColor, exp: expValue, damage: type.damage, typeKey, hitFlash: 0, spawnGlow: 30, trail: [], isBoss: false });
     }
-
     function spawnBoss() {
       const type = ENEMY_TYPES.boss;
       let spawnX, spawnY, attempts = 0;
       const minDist = 600;
-      do {
-        spawnX = 200 + Math.random() * (MAP_WIDTH - 400);
-        spawnY = 200 + Math.random() * (MAP_HEIGHT - 400);
-        attempts++;
-      } while (attempts < 30 && distSq(spawnX, spawnY, player.x, player.y) < minDist * minDist);
+      do { spawnX = 200 + Math.random() * (MAP_WIDTH - 400); spawnY = 200 + Math.random() * (MAP_HEIGHT - 400); attempts++; } while (attempts < 30 && distSq(spawnX, spawnY, player.x, player.y) < minDist * minDist);
       const hpScale = 1 + bossCount * 0.5;
       const bossHp = Math.floor(type.hp * hpScale);
-      enemies.push({
-        x: spawnX, y: spawnY, radius: type.radius, speed: type.speed,
-        hp: bossHp, maxHp: bossHp,
-        color: type.color, color2: type.color2, glowColor: type.glowColor,
-        exp: type.exp + bossCount * 10, damage: type.damage, typeKey: 'boss',
-        hitFlash: 0, spawnGlow: 60, trail: [], isBoss: true,
-      });
+      enemies.push({ x: spawnX, y: spawnY, radius: type.radius, speed: type.speed, hp: bossHp, maxHp: bossHp, color: type.color, color2: type.color2, glowColor: type.glowColor, exp: type.exp + bossCount * 10, damage: type.damage, typeKey: 'boss', hitFlash: 0, spawnGlow: 60, trail: [], isBoss: true });
       bossCount++;
       shakeScreen(15);
       spawnParticles(spawnX, spawnY, 40, '#ff0060', 6, 6, 60);
@@ -980,9 +858,7 @@
         if (weapon.bulletCount > 1) {
           const baseOffset = (i / (weapon.bulletCount - 1) - 0.5) * weapon.spread;
           spreadOffset = baseOffset + (Math.random() - 0.5) * weapon.spread * 0.3;
-        } else {
-          spreadOffset = (Math.random() - 0.5) * weapon.spread;
-        }
+        } else { spreadOffset = (Math.random() - 0.5) * weapon.spread; }
         const bulletAngle = angle + spreadOffset;
         const cos = Math.cos(bulletAngle);
         const sin = Math.sin(bulletAngle);
@@ -990,13 +866,7 @@
         const muzzleY = player.y + sin * muzzleOffset;
         const isCrit = Math.random() < player.critChance;
         const finalDamage = isCrit ? totalDamage * player.critMultiplier : totalDamage;
-        bullets.push({
-          x: muzzleX, y: muzzleY, vx: cos * totalBulletSpeed, vy: sin * totalBulletSpeed,
-          radius: currentWeaponKey === 'cannon' ? BULLET_RADIUS * 1.8 : BULLET_RADIUS,
-          damage: finalDamage, isCrit, pierce: totalPierce, hitEnemies: [], trail: [],
-          color: isCrit ? '#ffffff' : weapon.color,
-          isCannon: currentWeaponKey === 'cannon',
-        });
+        bullets.push({ x: muzzleX, y: muzzleY, vx: cos * totalBulletSpeed, vy: sin * totalBulletSpeed, radius: currentWeaponKey === 'cannon' ? BULLET_RADIUS * 1.8 : BULLET_RADIUS, damage: finalDamage, isCrit, pierce: totalPierce, hitEnemies: [], trail: [], color: isCrit ? '#ffffff' : weapon.color, isCannon: currentWeaponKey === 'cannon' });
         spawnParticles(muzzleX, muzzleY, 3, weapon.color, 2.5, 2.5, 12);
       }
       spawnParticles(player.x + Math.cos(angle) * muzzleOffset, player.y + Math.sin(angle) * muzzleOffset, 2, '#aaaaaa', 1.2, 4, 25);
@@ -1012,18 +882,13 @@
       if (keys.s) moveY += 1;
       if (keys.a) moveX -= 1;
       if (keys.d) moveX += 1;
-      // 虚拟摇杆输入
-      if (joystick.active) {
-        moveX += joystick.dx;
-        moveY += joystick.dy;
-      }
+      if (moveJoystick.active) { moveX += moveJoystick.dx; moveY += moveJoystick.dy; }
       const moving = (moveX !== 0 || moveY !== 0);
       if (moving) {
         const len = Math.hypot(moveX, moveY);
         if (len > 1) { moveX /= len; moveY /= len; }
         const speed = BASE_MOVE_SPEED * player.moveSpeed;
-        moveX *= speed;
-        moveY *= speed;
+        moveX *= speed; moveY *= speed;
       }
       player.x = clamp(player.x + moveX, PLAYER_RADIUS, MAP_WIDTH - PLAYER_RADIUS);
       player.y = clamp(player.y + moveY, PLAYER_RADIUS, MAP_HEIGHT - PLAYER_RADIUS);
@@ -1031,30 +896,49 @@
         player.trail.push({ x: player.x, y: player.y, life: 18, maxLife: 18 });
         if (player.fireTrail > 0) spawnParticles(player.x, player.y, 2, '#ff6020', 2, 3, 15);
       }
-      for (let i = player.trail.length - 1; i >= 0; i--) {
-        player.trail[i].life--;
-        if (player.trail[i].life <= 0) player.trail.splice(i, 1);
-      }
+      for (let i = player.trail.length - 1; i >= 0; i--) { player.trail[i].life--; if (player.trail[i].life <= 0) player.trail.splice(i, 1); }
       if (player.hpRegen > 0 && player.hp < player.maxHp) player.hp = Math.min(player.hp + player.hpRegen / 60, player.maxHp);
       const viewW = getViewWidth(), viewH = getViewHeight();
       let targetX = clamp(player.x - viewW / 2, 0, MAP_WIDTH - viewW);
       let targetY = clamp(player.y - viewH / 2, 0, MAP_HEIGHT - viewH);
       if (MAP_WIDTH < viewW) targetX = (MAP_WIDTH - viewW) / 2;
       if (MAP_HEIGHT < viewH) targetY = (MAP_HEIGHT - viewH) / 2;
-      cameraTarget.x = targetX;
-      cameraTarget.y = targetY;
+      cameraTarget.x = targetX; cameraTarget.y = targetY;
       camera.x += (cameraTarget.x - camera.x) * CAMERA_LERP;
       camera.y += (cameraTarget.y - camera.y) * CAMERA_LERP;
-      // 自动朝向最近敌人
-      if (enemies.length > 0) {
-        let closest = null, closestDist = Infinity;
-        for (const e of enemies) {
-          const d = distSq(player.x, player.y, e.x, e.y);
-          if (d < closestDist) { closestDist = d; closest = e; }
+
+      // 朝向逻辑
+      if (isTouchDevice) {
+        // 移动端：射击摇杆有方向时朝向射击方向，否则朝向最近敌人
+        if (aimJoystick.active && aimJoystick.hasDirection) {
+          const mag = Math.hypot(aimJoystick.dx, aimJoystick.dy);
+          if (mag > 0.15) {
+            player.angle = Math.atan2(aimJoystick.dy, aimJoystick.dx);
+          }
+        } else if (enemies.length > 0) {
+          let closest = null, closestDist = Infinity;
+          for (const e of enemies) {
+            const d = distSq(player.x, player.y, e.x, e.y);
+            if (d < closestDist) { closestDist = d; closest = e; }
+          }
+          if (closest) {
+            const dx = closest.x - player.x;
+            const dy = closest.y - player.y;
+            if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) player.angle = Math.atan2(dy, dx);
+          }
         }
-        if (closest) {
-          const dx = closest.x - player.x;
-          const dy = closest.y - player.y;
+      } else {
+        // 桌面端：面向鼠标
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        if (lastMouse.clientX !== null) {
+          const canvasX = (lastMouse.clientX - rect.left) * scaleX;
+          const canvasY = (lastMouse.clientY - rect.top) * scaleY;
+          const worldMouseX = canvasX + camera.x;
+          const worldMouseY = canvasY + camera.y;
+          const dx = worldMouseX - player.x;
+          const dy = worldMouseY - player.y;
           if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) player.angle = Math.atan2(dy, dx);
         }
       }
@@ -1110,11 +994,7 @@
       if (pickedSkills.length < 3) {
         const remaining = availableSkills.filter(s => !usedIds.has(s.id));
         const shuffled = [...remaining].sort(() => Math.random() - 0.5);
-        for (const s of shuffled) {
-          if (pickedSkills.length >= 3) break;
-          pickedSkills.push(s);
-          usedIds.add(s.id);
-        }
+        for (const s of shuffled) { if (pickedSkills.length >= 3) break; pickedSkills.push(s); usedIds.add(s.id); }
       }
       requestAnimationFrame(() => {
         skillOptions.innerHTML = '';
@@ -1123,13 +1003,7 @@
           const qualityInfo = QUALITIES[skill.quality];
           const card = document.createElement('div');
           card.className = `skill-card ${qualityInfo.class}`;
-          card.innerHTML = `
-            <div class="quality-badge">${qualityInfo.name}</div>
-            <span class="skill-icon">${skill.icon}</span>
-            <div class="skill-name">${skill.name}</div>
-            <div class="skill-desc">${skill.desc}</div>
-            <div class="skill-level">等级 ${currentLevel} / ${skill.maxLevel}</div>
-          `;
+          card.innerHTML = `<div class="quality-badge">${qualityInfo.name}</div><span class="skill-icon">${skill.icon}</span><div class="skill-name">${skill.name}</div><div class="skill-desc">${skill.desc}</div><div class="skill-level">等级 ${currentLevel} / ${skill.maxLevel}</div>`;
           card.addEventListener('click', () => {
             if (isLevelingUp) {
               skill.apply();
@@ -1152,10 +1026,7 @@
         const b = bullets[i];
         b.x += b.vx; b.y += b.vy;
         b.trail.push({ x: b.x, y: b.y, life: 10, maxLife: 10 });
-        for (let t = b.trail.length - 1; t >= 0; t--) {
-          b.trail[t].life--;
-          if (b.trail[t].life <= 0) b.trail.splice(t, 1);
-        }
+        for (let t = b.trail.length - 1; t >= 0; t--) { b.trail[t].life--; if (b.trail[t].life <= 0) b.trail.splice(t, 1); }
         if (b.x < -100 || b.x > MAP_WIDTH + 100 || b.y < -100 || b.y > MAP_HEIGHT + 100) { bullets.splice(i, 1); continue; }
         let bulletUsed = false;
         for (let j = enemies.length - 1; j >= 0; j--) {
@@ -1173,8 +1044,7 @@
             shakeScreen(b.isCrit ? 3 : 1.5);
             if (e.hp <= 0) {
               const expGain = e.exp;
-              gainExp(expGain);
-              kills++;
+              gainExp(expGain); kills++;
               playExplosionSound();
               if (player.lifesteal > 0) player.hp = Math.min(player.maxHp, player.hp + player.lifesteal);
               const typeDef = ENEMY_TYPES[e.typeKey];
@@ -1229,17 +1099,11 @@
         }
         const dx = targetX - e.x, dy = targetY - e.y;
         const len = Math.hypot(dx, dy);
-        if (len > 0.5) {
-          const move = Math.min(e.speed * enemySlow, len);
-          e.x += (dx / len) * move; e.y += (dy / len) * move;
-        }
+        if (len > 0.5) { const move = Math.min(e.speed * enemySlow, len); e.x += (dx / len) * move; e.y += (dy / len) * move; }
         e.x = clamp(e.x, e.radius, MAP_WIDTH - e.radius);
         e.y = clamp(e.y, e.radius, MAP_HEIGHT - e.radius);
         if (frameCounter % (e.isBoss ? 2 : 3) === 0) e.trail.push({ x: e.x, y: e.y, life: 12, maxLife: 12 });
-        for (let t = e.trail.length - 1; t >= 0; t--) {
-          e.trail[t].life--;
-          if (e.trail[t].life <= 0) e.trail.splice(t, 1);
-        }
+        for (let t = e.trail.length - 1; t >= 0; t--) { e.trail[t].life--; if (e.trail[t].life <= 0) e.trail.splice(t, 1); }
         const dSq = distSq(player.x, player.y, e.x, e.y);
         const threshold = (PLAYER_RADIUS + e.radius) ** 2;
         if (dSq < threshold) {
@@ -1271,7 +1135,6 @@
         if (p.life <= 0) particles.splice(i, 1);
       }
     }
-
     function updateDamageTexts() {
       for (let i = damageTexts.length - 1; i >= 0; i--) {
         const dt = damageTexts[i];
@@ -1279,15 +1142,12 @@
         if (dt.life <= 0) damageTexts.splice(i, 1);
       }
     }
-
     function updateScreenShake() {
       if (screenShake.intensity > 0.1) {
         screenShake.x = (Math.random() - 0.5) * screenShake.intensity * 2;
         screenShake.y = (Math.random() - 0.5) * screenShake.intensity * 2;
         screenShake.intensity *= 0.88;
-      } else {
-        screenShake.x = 0; screenShake.y = 0; screenShake.intensity = 0;
-      }
+      } else { screenShake.x = 0; screenShake.y = 0; screenShake.intensity = 0; }
     }
 
     function triggerGameOver() {
@@ -1322,8 +1182,9 @@
       fireCooldown = 0; enemySpawnCooldown = 0;
       gameTime = 0; frameCounter = 0; kills = 0;
       isLevelingUp = false; nextBossTime = 45; bossCount = 0;
-      joystick.active = false; joystick.dx = 0; joystick.dy = 0;
-      joystickBase.classList.remove('active');
+      moveJoystick.active = false; moveJoystick.dx = 0; moveJoystick.dy = 0;
+      aimJoystick.active = false; aimJoystick.dx = 0; aimJoystick.dy = 0; aimJoystick.hasDirection = false;
+      moveBase.classList.remove('active'); aimBase.classList.remove('active');
       levelupPanel.classList.remove('active');
       gameoverPanel.classList.remove('active');
       const viewW = getViewWidth(), viewH = getViewHeight();
@@ -1342,15 +1203,7 @@
         const w = WEAPONS[key];
         const card = document.createElement('div');
         card.className = 'weapon-card';
-        card.innerHTML = `
-          <span class="weapon-card-icon">${w.icon}</span>
-          <div class="weapon-card-name">${w.name}</div>
-          <div class="weapon-card-desc">${w.desc}</div>
-          <div class="weapon-card-stats">
-            伤害 <span>${w.damage}x</span> · 射速 <span>${w.fireRate}x</span><br>
-            弹速 <span>${w.bulletSpeed}x</span> · 弹丸 <span>${w.bulletCount}</span>
-          </div>
-        `;
+        card.innerHTML = `<span class="weapon-card-icon">${w.icon}</span><div class="weapon-card-name">${w.name}</div><div class="weapon-card-desc">${w.desc}</div><div class="weapon-card-stats">伤害 <span>${w.damage}x</span> · 射速 <span>${w.fireRate}x</span><br>弹速 <span>${w.bulletSpeed}x</span> · 弹丸 <span>${w.bulletCount}</span></div>`;
         card.addEventListener('click', () => selectWeapon(key));
         weaponCards.appendChild(card);
       });
@@ -1366,11 +1219,7 @@
       playBGM();
     }
 
-    function startGame() {
-      if (!audio.allLoaded) return;
-      mainmenuPanel.classList.remove('active');
-      showWeaponSelect();
-    }
+    function startGame() { if (!audio.allLoaded) return; mainmenuPanel.classList.remove('active'); showWeaponSelect(); }
 
     function updateSpawning() {
       if (isLevelingUp || gameState !== 'playing') return;
@@ -1385,8 +1234,14 @@
 
     function updateShooting() {
       if (isLevelingUp || gameState !== 'playing') return;
-      // 移动端自动射击，桌面端按住鼠标
-      const shouldShoot = isTouchDevice || mouseDown;
+      // 桌面端：按住鼠标左键射击
+      // 移动端：射击摇杆有方向时自动射击
+      let shouldShoot = false;
+      if (isTouchDevice) {
+        shouldShoot = (aimJoystick.active && aimJoystick.hasDirection);
+      } else {
+        shouldShoot = mouseDown;
+      }
       if (!shouldShoot) { if (fireCooldown > 0) fireCooldown--; return; }
       if (fireCooldown <= 0) {
         if (enemies.length > 0) {
@@ -1476,8 +1331,7 @@
         ctx.arc(screenX, screenY, glowSize, 0, Math.PI * 2);
         ctx.strokeStyle = e.glowColor;
         ctx.lineWidth = e.isBoss ? 6 : 3;
-        ctx.shadowColor = e.glowColor;
-        ctx.shadowBlur = 30;
+        ctx.shadowColor = e.glowColor; ctx.shadowBlur = 30;
         ctx.globalAlpha = glowRatio;
         ctx.stroke();
         ctx.globalAlpha = 1;
@@ -1486,11 +1340,9 @@
         const pulseSize = Math.max(1, baseRadius + 12 + Math.sin(frameCounter * 0.1) * 6);
         ctx.beginPath();
         ctx.arc(screenX, screenY, pulseSize, 0, Math.PI * 2);
-        ctx.strokeStyle = e.glowColor;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = e.glowColor; ctx.lineWidth = 3;
         ctx.globalAlpha = Math.max(0, 0.4 + Math.sin(frameCounter * 0.1) * 0.2);
-        ctx.shadowColor = e.glowColor;
-        ctx.shadowBlur = 40;
+        ctx.shadowColor = e.glowColor; ctx.shadowBlur = 40;
         ctx.stroke();
         ctx.globalAlpha = 1;
       }
@@ -1499,13 +1351,8 @@
       ctx.fillStyle = flash ? 'rgba(255,255,255,0.3)' : `${e.glowColor}22`;
       ctx.fill();
       const gradient = ctx.createRadialGradient(screenX - baseRadius * 0.3, screenY - baseRadius * 0.3, Math.max(1, baseRadius * 0.1), screenX, screenY, Math.max(1, baseRadius));
-      if (flash) {
-        gradient.addColorStop(0, '#ffffff');
-        gradient.addColorStop(1, '#ffffff');
-      } else {
-        gradient.addColorStop(0, e.color);
-        gradient.addColorStop(1, e.color2);
-      }
+      if (flash) { gradient.addColorStop(0, '#ffffff'); gradient.addColorStop(1, '#ffffff'); }
+      else { gradient.addColorStop(0, e.color); gradient.addColorStop(1, e.color2); }
       ctx.beginPath();
       ctx.arc(screenX, screenY, Math.max(1, baseRadius), 0, Math.PI * 2);
       ctx.fillStyle = gradient;
@@ -1519,9 +1366,7 @@
       ctx.fill();
       if (e.isBoss) {
         ctx.font = 'bold 16px "Courier New"';
-        ctx.fillStyle = '#ff3060';
-        ctx.shadowColor = '#ff0060';
-        ctx.shadowBlur = 15;
+        ctx.fillStyle = '#ff3060'; ctx.shadowColor = '#ff0060'; ctx.shadowBlur = 15;
         ctx.textAlign = 'center';
         ctx.fillText('BOSS', screenX, screenY - baseRadius - 26);
         ctx.textAlign = 'left';
@@ -1550,35 +1395,25 @@
     }
 
     function drawHpExpBars() {
-      const vw = getViewWidth(), vh = getViewHeight();
       const panelX = 14, panelY = 14, panelW = 240, panelH = 92;
       ctx.save();
       ctx.fillStyle = 'rgba(8, 14, 26, 0.78)';
       ctx.strokeStyle = 'rgba(80, 170, 255, 0.5)';
       ctx.lineWidth = 1.5;
-      ctx.shadowColor = '#3f9eff';
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.roundRect(panelX, panelY, panelW, panelH, 12);
-      ctx.fill();
-      ctx.stroke();
+      ctx.shadowColor = '#3f9eff'; ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.roundRect(panelX, panelY, panelW, panelH, 12); ctx.fill(); ctx.stroke();
       const barX = panelX + 16, barW = panelW - 32, barH = 16;
       const hpY = panelY + 14;
       const hpPercent = clamp(player.hp / player.maxHp, 0, 1);
       ctx.shadowBlur = 6;
-      ctx.fillStyle = '#ff8aa8';
-      ctx.font = 'bold 13px "Courier New"';
-      ctx.textAlign = 'left';
+      ctx.fillStyle = '#ff8aa8'; ctx.font = 'bold 13px "Courier New"'; ctx.textAlign = 'left';
       ctx.fillText('❤️ 生命', barX, hpY - 4);
-      ctx.fillStyle = '#ffccdd';
-      ctx.textAlign = 'right';
+      ctx.fillStyle = '#ffccdd'; ctx.textAlign = 'right';
       ctx.fillText(`${Math.floor(player.hp)} / ${player.maxHp}`, barX + barW, hpY - 4);
       ctx.textAlign = 'left';
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#1a0e14';
-      ctx.beginPath();
-      ctx.roundRect(barX - 1, hpY + 2, barW + 2, barH + 2, 5);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(barX - 1, hpY + 2, barW + 2, barH + 2, 5); ctx.fill();
       if (hpPercent > 0) {
         const hpGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
         if (hpPercent > 0.6) { hpGrad.addColorStop(0, '#30d060'); hpGrad.addColorStop(1, '#60ff90'); }
@@ -1587,58 +1422,37 @@
         ctx.fillStyle = hpGrad;
         ctx.shadowColor = hpPercent > 0.6 ? '#30d060' : (hpPercent > 0.3 ? '#e0b020' : '#e03040');
         ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.roundRect(barX, hpY + 3, barW * hpPercent, barH - 2, 4);
-        ctx.fill();
+        ctx.beginPath(); ctx.roundRect(barX, hpY + 3, barW * hpPercent, barH - 2, 4); ctx.fill();
       }
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(255, 130, 160, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(barX, hpY + 3, barW, barH - 2, 4);
-      ctx.stroke();
+      ctx.strokeStyle = 'rgba(255, 130, 160, 0.5)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(barX, hpY + 3, barW, barH - 2, 4); ctx.stroke();
       const expY = panelY + 58;
       const expPercent = clamp(player.exp / player.expToNext, 0, 1);
       ctx.shadowBlur = 6;
-      ctx.fillStyle = '#88ccff';
-      ctx.font = 'bold 13px "Courier New"';
-      ctx.textAlign = 'left';
+      ctx.fillStyle = '#88ccff'; ctx.font = 'bold 13px "Courier New"'; ctx.textAlign = 'left';
       ctx.fillText('⭐ 经验', barX, expY - 4);
-      ctx.fillStyle = '#c0e8ff';
-      ctx.textAlign = 'right';
+      ctx.fillStyle = '#c0e8ff'; ctx.textAlign = 'right';
       ctx.fillText(`${Math.floor(player.exp)} / ${player.expToNext}`, barX + barW, expY - 4);
       ctx.textAlign = 'left';
       ctx.shadowBlur = 0;
       ctx.fillStyle = '#0e1624';
-      ctx.beginPath();
-      ctx.roundRect(barX - 1, expY + 2, barW + 2, barH + 2, 5);
-      ctx.fill();
+      ctx.beginPath(); ctx.roundRect(barX - 1, expY + 2, barW + 2, barH + 2, 5); ctx.fill();
       if (expPercent > 0) {
         const expGrad = ctx.createLinearGradient(barX, 0, barX + barW, 0);
-        expGrad.addColorStop(0, '#4ac7ff');
-        expGrad.addColorStop(1, '#aae0ff');
+        expGrad.addColorStop(0, '#4ac7ff'); expGrad.addColorStop(1, '#aae0ff');
         ctx.fillStyle = expGrad;
-        ctx.shadowColor = '#4ac7ff';
-        ctx.shadowBlur = 14;
-        ctx.beginPath();
-        ctx.roundRect(barX, expY + 3, barW * expPercent, barH - 2, 4);
-        ctx.fill();
+        ctx.shadowColor = '#4ac7ff'; ctx.shadowBlur = 14;
+        ctx.beginPath(); ctx.roundRect(barX, expY + 3, barW * expPercent, barH - 2, 4); ctx.fill();
       }
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = 'rgba(100, 180, 255, 0.5)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(barX, expY + 3, barW, barH - 2, 4);
-      ctx.stroke();
-      ctx.fillStyle = '#c0e8ff';
-      ctx.font = 'bold 12px "Courier New"';
-      ctx.textAlign = 'right';
-      ctx.shadowBlur = 6;
+      ctx.strokeStyle = 'rgba(100, 180, 255, 0.5)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.roundRect(barX, expY + 3, barW, barH - 2, 4); ctx.stroke();
+      ctx.fillStyle = '#c0e8ff'; ctx.font = 'bold 12px "Courier New"'; ctx.textAlign = 'right'; ctx.shadowBlur = 6;
       ctx.fillText(`Lv.${player.level}`, barX + barW, expY + barH + 14);
       ctx.textAlign = 'left';
       ctx.restore();
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
     }
 
     function drawMinimap() {
@@ -1652,67 +1466,43 @@
       ctx.fillStyle = 'rgba(8, 14, 26, 0.78)';
       ctx.strokeStyle = 'rgba(80, 170, 255, 0.5)';
       ctx.lineWidth = 1.5;
-      ctx.shadowColor = '#3f9eff';
-      ctx.shadowBlur = 18;
-      ctx.beginPath();
-      ctx.roundRect(mapX, mapY, mapSize, mapSize, 8);
-      ctx.fill();
-      ctx.stroke();
+      ctx.shadowColor = '#3f9eff'; ctx.shadowBlur = 18;
+      ctx.beginPath(); ctx.roundRect(mapX, mapY, mapSize, mapSize, 8); ctx.fill(); ctx.stroke();
       ctx.save();
-      ctx.beginPath();
-      ctx.roundRect(mapX + 2, mapY + 2, mapSize - 4, mapSize - 4, 6);
-      ctx.clip();
-      ctx.strokeStyle = 'rgba(40, 70, 100, 0.3)';
-      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.roundRect(mapX + 2, mapY + 2, mapSize - 4, mapSize - 4, 6); ctx.clip();
+      ctx.strokeStyle = 'rgba(40, 70, 100, 0.3)'; ctx.lineWidth = 0.5;
       for (let i = 1; i < 4; i++) {
         const gx = mapX + (mapSize / 4) * i;
         const gy = mapY + (mapSize / 4) * i;
-        ctx.beginPath();
-        ctx.moveTo(gx, mapY + 2);
-        ctx.lineTo(gx, mapY + mapSize - 2);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(mapX + 2, gy);
-        ctx.lineTo(mapX + mapSize - 2, gy);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(gx, mapY + 2); ctx.lineTo(gx, mapY + mapSize - 2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(mapX + 2, gy); ctx.lineTo(mapX + mapSize - 2, gy); ctx.stroke();
       }
       for (let e of enemies) {
         const ex = mapX + e.x * scaleX, ey = mapY + e.y * scaleY;
         ctx.beginPath();
         if (e.isBoss) {
           ctx.arc(ex, ey, 4, 0, Math.PI * 2);
-          ctx.fillStyle = '#ff0060';
-          ctx.shadowColor = '#ff0060';
-          ctx.shadowBlur = 8;
+          ctx.fillStyle = '#ff0060'; ctx.shadowColor = '#ff0060'; ctx.shadowBlur = 8;
         } else {
           ctx.arc(ex, ey, 1.8, 0, Math.PI * 2);
-          ctx.fillStyle = '#ff4060';
-          ctx.shadowBlur = 4;
+          ctx.fillStyle = '#ff4060'; ctx.shadowBlur = 4;
         }
         ctx.fill();
       }
       const px = mapX + player.x * scaleX, py = mapY + player.y * scaleY;
-      ctx.beginPath();
-      ctx.arc(px, py, 4, 0, Math.PI * 2);
-      ctx.fillStyle = '#4ac7ff';
-      ctx.shadowColor = '#4ac7ff';
-      ctx.shadowBlur = 10;
+      ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#4ac7ff'; ctx.shadowColor = '#4ac7ff'; ctx.shadowBlur = 10;
       ctx.fill();
       ctx.beginPath();
       ctx.moveTo(px, py);
       ctx.lineTo(px + Math.cos(player.angle) * 8, py + Math.sin(player.angle) * 8);
-      ctx.strokeStyle = '#aae0ff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.strokeStyle = '#aae0ff'; ctx.lineWidth = 2; ctx.stroke();
       ctx.restore();
       ctx.shadowBlur = 6;
-      ctx.fillStyle = '#7ab8e0';
-      ctx.font = 'bold 11px "Courier New"';
-      ctx.textAlign = 'left';
+      ctx.fillStyle = '#7ab8e0'; ctx.font = 'bold 11px "Courier New"'; ctx.textAlign = 'left';
       ctx.fillText('小地图', mapX + 6, mapY + 14);
       ctx.restore();
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
     }
 
     function draw() {
@@ -1720,9 +1510,7 @@
       const shakeX = screenShake.x, shakeY = screenShake.y;
       ctx.clearRect(0, 0, vw, vh);
       if (gameState === 'menu' || gameState === 'weaponSelect') {
-        ctx.fillStyle = '#0a0e18';
-        ctx.fillRect(0, 0, vw, vh);
-        return;
+        ctx.fillStyle = '#0a0e18'; ctx.fillRect(0, 0, vw, vh); return;
       }
       ctx.save();
       ctx.translate(shakeX, shakeY);
@@ -1732,28 +1520,22 @@
       const endX = camera.x + vw;
       const endY = camera.y + vh;
       const bgGradient = ctx.createRadialGradient(vw / 2, vh / 2, 100, vw / 2, vh / 2, vw * 0.7);
-      bgGradient.addColorStop(0, '#0e1420');
-      bgGradient.addColorStop(1, '#060a12');
-      ctx.fillStyle = bgGradient;
-      ctx.fillRect(-50, -50, vw + 100, vh + 100);
-      ctx.strokeStyle = "#1a2a3a";
-      ctx.lineWidth = 1;
+      bgGradient.addColorStop(0, '#0e1420'); bgGradient.addColorStop(1, '#060a12');
+      ctx.fillStyle = bgGradient; ctx.fillRect(-50, -50, vw + 100, vh + 100);
+      ctx.strokeStyle = "#1a2a3a"; ctx.lineWidth = 1;
       ctx.beginPath();
       for (let x = startX; x <= endX; x += gridSize) {
         const screenX = x - camera.x;
         if (screenX < -50 || screenX > vw + 50) continue;
-        ctx.moveTo(screenX, -50);
-        ctx.lineTo(screenX, vh + 50);
+        ctx.moveTo(screenX, -50); ctx.lineTo(screenX, vh + 50);
       }
       for (let y = startY; y <= endY; y += gridSize) {
         const screenY = y - camera.y;
         if (screenY < -50 || screenY > vh + 50) continue;
-        ctx.moveTo(-50, screenY);
-        ctx.lineTo(vw + 50, screenY);
+        ctx.moveTo(-50, screenY); ctx.lineTo(vw + 50, screenY);
       }
       ctx.stroke();
-      ctx.strokeStyle = "#3f5e8a";
-      ctx.lineWidth = 6;
+      ctx.strokeStyle = "#3f5e8a"; ctx.lineWidth = 6;
       ctx.setLineDash([20, 30]);
       ctx.strokeRect(-camera.x, -camera.y, MAP_WIDTH, MAP_HEIGHT);
       ctx.setLineDash([]);
@@ -1763,38 +1545,32 @@
           const tr = b.trail[t];
           const tx = tr.x - camera.x, ty = tr.y - camera.y;
           const alpha = (tr.life / tr.maxLife) * 0.6;
-          ctx.beginPath();
-          ctx.arc(tx, ty, b.radius * (tr.life / tr.maxLife) * 0.8, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(tx, ty, b.radius * (tr.life / tr.maxLife) * 0.8, 0, Math.PI * 2);
           ctx.fillStyle = b.color ? `${b.color}${Math.floor(alpha * 255).toString(16).padStart(2, '0')}` : `rgba(255, 200, 80, ${alpha})`;
           ctx.fill();
         }
         const screenX = b.x - camera.x, screenY = b.y - camera.y;
         if (screenX < -30 || screenX > vw + 30 || screenY < -30 || screenY > vh + 30) continue;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, b.radius + 4, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(screenX, screenY, b.radius + 4, 0, Math.PI * 2);
         ctx.fillStyle = b.isCannon ? 'rgba(255, 100, 100, 0.3)' : 'rgba(255, 220, 100, 0.25)';
         ctx.fill();
         const bulletGrad = ctx.createRadialGradient(screenX - 1, screenY - 1, 0, screenX, screenY, b.radius);
         bulletGrad.addColorStop(0, '#ffffff');
         bulletGrad.addColorStop(0.5, b.color || '#ffe680');
         bulletGrad.addColorStop(1, b.isCannon ? '#aa0000' : '#ffaa00');
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, b.radius, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(screenX, screenY, b.radius, 0, Math.PI * 2);
         ctx.fillStyle = bulletGrad;
-        ctx.shadowColor = b.color || "#ffd966";
-        ctx.shadowBlur = 25;
+        ctx.shadowColor = b.color || "#ffd966"; ctx.shadowBlur = 25;
         ctx.fill();
       }
       for (let p of particles) {
         const screenX = p.x - camera.x, screenY = p.y - camera.y;
         if (screenX < -20 || screenX > vw + 20 || screenY < -20 || screenY > vh + 20) continue;
         const alpha = p.life / p.maxLife;
-        ctx.beginPath();
-        ctx.arc(screenX, screenY, p.size * alpha, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(screenX, screenY, p.size * alpha, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = alpha;
-        ctx.shadowColor = p.color;
-        ctx.shadowBlur = 15;
+        ctx.shadowColor = p.color; ctx.shadowBlur = 15;
         ctx.fill();
         ctx.globalAlpha = 1;
       }
@@ -1805,8 +1581,7 @@
         ctx.font = 'bold 17px "Courier New"';
         ctx.fillStyle = dt.color;
         ctx.globalAlpha = alpha;
-        ctx.shadowColor = dt.color;
-        ctx.shadowBlur = 12;
+        ctx.shadowColor = dt.color; ctx.shadowBlur = 12;
         ctx.textAlign = 'center';
         ctx.fillText(dt.text, screenX, screenY);
         ctx.globalAlpha = 1;
@@ -1816,31 +1591,23 @@
         const tr = player.trail[t];
         const tx = tr.x - camera.x, ty = tr.y - camera.y;
         const alpha = (tr.life / tr.maxLife) * 0.35;
-        ctx.beginPath();
-        ctx.arc(tx, ty, PLAYER_RADIUS * (tr.life / tr.maxLife) * 0.9, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(tx, ty, PLAYER_RADIUS * (tr.life / tr.maxLife) * 0.9, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(80, 200, 255, ${alpha})`;
         ctx.fill();
       }
       const playerScreenX = player.x - camera.x, playerScreenY = player.y - camera.y;
       const visible = player.invincible <= 0 || Math.floor(frameCounter / 6) % 2 === 0;
       if (visible && gameState === 'playing') {
-        ctx.beginPath();
-        ctx.arc(playerScreenX, playerScreenY, PLAYER_RADIUS + 8, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(58, 168, 255, 0.15)';
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(playerScreenX, playerScreenY, PLAYER_RADIUS + 8, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(58, 168, 255, 0.15)'; ctx.fill();
         const pGrad = ctx.createRadialGradient(playerScreenX - 5, playerScreenY - 5, 2, playerScreenX, playerScreenY, PLAYER_RADIUS);
-        pGrad.addColorStop(0, '#aae0ff');
-        pGrad.addColorStop(1, '#3aa8ff');
-        ctx.beginPath();
-        ctx.arc(playerScreenX, playerScreenY, PLAYER_RADIUS, 0, Math.PI * 2);
+        pGrad.addColorStop(0, '#aae0ff'); pGrad.addColorStop(1, '#3aa8ff');
+        ctx.beginPath(); ctx.arc(playerScreenX, playerScreenY, PLAYER_RADIUS, 0, Math.PI * 2);
         ctx.fillStyle = pGrad;
-        ctx.shadowColor = "#4ac7ff";
-        ctx.shadowBlur = 30;
+        ctx.shadowColor = "#4ac7ff"; ctx.shadowBlur = 30;
         ctx.fill();
-        ctx.beginPath();
-        ctx.arc(playerScreenX - 4, playerScreenY - 4, 8, 0, Math.PI * 2);
-        ctx.fillStyle = "#d0f0ff";
-        ctx.shadowBlur = 25;
+        ctx.beginPath(); ctx.arc(playerScreenX - 4, playerScreenY - 4, 8, 0, Math.PI * 2);
+        ctx.fillStyle = "#d0f0ff"; ctx.shadowBlur = 25;
         ctx.fill();
         drawGun(playerScreenX, playerScreenY, player.angle, player.gunRecoil);
         if (player.gunRecoil > 0.6) {
@@ -1852,11 +1619,9 @@
           flameGrad.addColorStop(0, '#ffffff');
           flameGrad.addColorStop(0.3, flameColor);
           flameGrad.addColorStop(1, 'rgba(255, 100, 0, 0)');
-          ctx.beginPath();
-          ctx.arc(muzzleX, muzzleY, 18, 0, Math.PI * 2);
+          ctx.beginPath(); ctx.arc(muzzleX, muzzleY, 18, 0, Math.PI * 2);
           ctx.fillStyle = flameGrad;
-          ctx.shadowColor = flameColor;
-          ctx.shadowBlur = 40;
+          ctx.shadowColor = flameColor; ctx.shadowBlur = 40;
           ctx.fill();
         }
       }
@@ -1870,9 +1635,7 @@
         drawHpExpBars();
         drawMinimap();
       }
-      ctx.shadowBlur = 0;
-      ctx.shadowColor = "transparent";
-      ctx.textAlign = 'left';
+      ctx.shadowBlur = 0; ctx.shadowColor = "transparent"; ctx.textAlign = 'left';
     }
 
     function updateHUD() {
@@ -1882,137 +1645,101 @@
       weaponSpan.textContent = WEAPONS[currentWeaponKey].name;
     }
 
-    // ---------- 虚拟摇杆事件 ----------
-    function getCanvasCoords(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: (clientX - rect.left) * (canvas.width / rect.width),
-        y: (clientY - rect.top) * (canvas.height / rect.height),
-      };
-    }
-
-    function updateJoystickVisual() {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = rect.width / canvas.width;
-      const scaleY = rect.height / canvas.height;
-      joystickBase.style.left = (joystick.baseX * scaleX) + 'px';
-      joystickBase.style.top = (joystick.baseY * scaleY) + 'px';
-      joystickThumb.style.left = ((joystick.baseX + joystick.dx * joystick.maxDist) * scaleX) + 'px';
-      joystickThumb.style.top = ((joystick.baseY + joystick.dy * joystick.maxDist) * scaleY) + 'px';
-    }
-
-    joystickZone.addEventListener('touchstart', (e) => {
-      if (gameState !== 'playing' || isLevelingUp) return;
-      e.preventDefault();
-      const touch = e.changedTouches[0];
-      joystick.touchId = touch.identifier;
-      const rect = joystickZone.getBoundingClientRect();
-      // 摇杆基座固定显示在区域中心
-      const baseX = rect.width / 2;
-      const baseY = rect.height / 2;
-      const canvasRect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / canvasRect.width;
-      const scaleY = canvas.height / canvasRect.height;
-      joystick.baseX = (rect.left + baseX - canvasRect.left) * scaleX;
-      joystick.baseY = (rect.top + baseY - canvasRect.top) * scaleY;
-      joystick.active = true;
-      joystickBase.classList.add('active');
-      updateJoystickVisual();
-
-      // 首次触摸位置也可以直接决定方向
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
-      const dx = touchX - baseX;
-      const dy = touchY - baseY;
-      const dist = Math.hypot(dx, dy);
-      if (dist > 5) {
-        const nd = Math.min(dist, joystick.maxDist) / joystick.maxDist;
-        joystick.dx = (dx / dist) * nd;
-        joystick.dy = (dy / dist) * nd;
-        updateJoystickVisual();
+    // ---------- 摇杆处理 ----------
+    function setupJoystick(zoneEl, baseEl, thumbEl, state, isAim) {
+      function getPos(touch) {
+        const rect = zoneEl.getBoundingClientRect();
+        return { x: touch.clientX - rect.left, y: touch.clientY - rect.top, w: rect.width, h: rect.height, rect };
       }
-    }, { passive: false });
-
-    joystickZone.addEventListener('touchmove', (e) => {
-      if (!joystick.active) return;
-      e.preventDefault();
-      const touch = Array.from(e.changedTouches).find(t => t.identifier === joystick.touchId);
-      if (!touch) return;
-      const rect = joystickZone.getBoundingClientRect();
-      const baseX = rect.width / 2;
-      const baseY = rect.height / 2;
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
-      let dx = touchX - baseX;
-      let dy = touchY - baseY;
-      const dist = Math.hypot(dx, dy);
-      if (dist > joystick.maxDist) {
-        dx = (dx / dist) * joystick.maxDist;
-        dy = (dy / dist) * joystick.maxDist;
+      function updateVisual() {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = rect.width / canvas.width;
+        const scaleY = rect.height / canvas.height;
+        // 基座固定在区域中心
+        const zoneRect = zoneEl.getBoundingClientRect();
+        const baseScreenX = zoneRect.left + zoneRect.width / 2;
+        const baseScreenY = zoneRect.top + zoneRect.height / 2;
+        baseEl.style.left = (zoneRect.width / 2) + 'px';
+        baseEl.style.top = (zoneRect.height / 2) + 'px';
+        thumbEl.style.left = (zoneRect.width / 2 + state.dx * state.maxDist) + 'px';
+        thumbEl.style.top = (zoneRect.height / 2 + state.dy * state.maxDist) + 'px';
       }
-      joystick.dx = dx / joystick.maxDist;
-      joystick.dy = dy / joystick.maxDist;
-      updateJoystickVisual();
-    }, { passive: false });
 
-    function endJoystick(e) {
-      if (!joystick.active) return;
-      const touch = e.changedTouches ? Array.from(e.changedTouches).find(t => t.identifier === joystick.touchId) : null;
-      if (e.changedTouches && !touch && e.type !== 'touchend') return;
-      joystick.active = false;
-      joystick.touchId = null;
-      joystick.dx = 0;
-      joystick.dy = 0;
-      joystickBase.classList.remove('active');
-      updateJoystickVisual();
+      zoneEl.addEventListener('touchstart', (e) => {
+        if (gameState !== 'playing' || isLevelingUp) return;
+        e.preventDefault();
+        if (state.active) return;
+        const touch = e.changedTouches[0];
+        state.touchId = touch.identifier;
+        state.active = true;
+        state.dx = 0; state.dy = 0;
+        if (isAim) state.hasDirection = false;
+        baseEl.classList.add('active');
+        updateVisual();
+      }, { passive: false });
+
+      zoneEl.addEventListener('touchmove', (e) => {
+        if (!state.active) return;
+        e.preventDefault();
+        const touch = Array.from(e.changedTouches).find(t => t.identifier === state.touchId);
+        if (!touch) return;
+        const rect = zoneEl.getBoundingClientRect();
+        const touchX = touch.clientX - rect.left;
+        const touchY = touch.clientY - rect.top;
+        let dx = touchX - rect.width / 2;
+        let dy = touchY - rect.height / 2;
+        const dist = Math.hypot(dx, dy);
+        if (dist > state.maxDist) {
+          dx = (dx / dist) * state.maxDist;
+          dy = (dy / dist) * state.maxDist;
+        }
+        state.dx = dx / state.maxDist;
+        state.dy = dy / state.maxDist;
+        if (isAim && dist > 10) state.hasDirection = true;
+        updateVisual();
+      }, { passive: false });
+
+      function end(e) {
+        if (!state.active) return;
+        const touch = e.changedTouches ? Array.from(e.changedTouches).find(t => t.identifier === state.touchId) : null;
+        if (e.changedTouches && e.type !== 'touchend' && !touch) return;
+        state.active = false;
+        state.touchId = null;
+        state.dx = 0; state.dy = 0;
+        if (isAim) state.hasDirection = false;
+        baseEl.classList.remove('active');
+        updateVisual();
+      }
+      zoneEl.addEventListener('touchend', end);
+      zoneEl.addEventListener('touchcancel', end);
+      zoneEl.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
     }
-    joystickZone.addEventListener('touchend', endJoystick);
-    joystickZone.addEventListener('touchcancel', endJoystick);
 
-    // 阻止触摸摇杆区域的页面滚动
-    joystickZone.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
-    shootZone.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    setupJoystick(moveZone, moveBase, moveThumb, moveJoystick, false);
+    setupJoystick(aimZone, aimBase, aimThumb, aimJoystick, true);
 
-    // 初始化摇杆视觉
-    function initJoystickVisual() {
-      const rect = joystickZone.getBoundingClientRect();
-      joystick.baseX = rect.width / 2;
-      joystick.baseY = rect.height / 2;
-      updateJoystickVisual();
-    }
-    window.addEventListener('resize', () => setTimeout(initJoystickVisual, 100));
-    setTimeout(initJoystickVisual, 100);
-
-    // ---------- 桌面鼠标输入（保留原有） ----------
+    // ---------- 桌面鼠标 ----------
     let mouseDown = false;
-    canvas.addEventListener('mousedown', (e) => {
-      if (e.button === 0 && gameState === 'playing' && !isLevelingUp) mouseDown = true;
-    });
+    let lastMouse = { clientX: null, clientY: null };
+    canvas.addEventListener('mousedown', (e) => { if (e.button === 0 && gameState === 'playing' && !isLevelingUp) mouseDown = true; });
     window.addEventListener('mouseup', () => { mouseDown = false; });
+    canvas.addEventListener('mousemove', (e) => { lastMouse.clientX = e.clientX; lastMouse.clientY = e.clientY; });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // ---------- 键盘输入（桌面） ----------
+    // ---------- 键盘 ----------
     window.addEventListener('keydown', (e) => {
       const key = e.key.toLowerCase();
       if (key === 'w' || key === 'a' || key === 's' || key === 'd') { e.preventDefault(); keys[key] = true; }
-      if (key === 'r' && gameState === 'gameover') {
-        resetGame(); gameState = 'playing';
-        gameoverPanel.classList.remove('active');
-      }
+      if (key === 'r' && gameState === 'gameover') { resetGame(); gameState = 'playing'; gameoverPanel.classList.remove('active'); }
     });
     window.addEventListener('keyup', (e) => {
       const key = e.key.toLowerCase();
       if (key === 'w' || key === 'a' || key === 's' || key === 'd') { e.preventDefault(); keys[key] = false; }
     });
-    window.addEventListener('blur', () => {
-      keys.w = false; keys.a = false; keys.s = false; keys.d = false; mouseDown = false;
-    });
+    window.addEventListener('blur', () => { keys.w = false; keys.a = false; keys.s = false; keys.d = false; mouseDown = false; });
 
-    // ---------- 按钮事件 ----------
-    restartBtn.addEventListener('click', () => {
-      resetGame(); gameState = 'playing';
-      gameoverPanel.classList.remove('active');
-    });
+    // ---------- 按钮 ----------
+    restartBtn.addEventListener('click', () => { resetGame(); gameState = 'playing'; gameoverPanel.classList.remove('active'); });
     startBtn.addEventListener('click', startGame);
 
     // ---------- 主循环 ----------
@@ -2047,7 +1774,6 @@
       };
     }
 
-    // 初始化
     resetGame();
     gameState = 'menu';
     mainmenuPanel.classList.add('active');
